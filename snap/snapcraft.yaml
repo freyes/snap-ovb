@@ -1,0 +1,44 @@
+name: freyes-ovb
+base: core20
+summary: A way to use OpenStack instances to do simulated baremetal deployments
+description: |
+  OpenStack Virtual Baremetal is a way to use OpenStack instances to do
+  simulated baremetal deployments. This project is a collection of tools and
+  documentation that make it much easier to do so. It primarily consists of
+  the following pieces:
+
+  * Patches and documentation for setting up a host cloud.
+  * A deployment CLI that leverages the OpenStack Heat project to deploy the VMs, networks, and other resources needed.
+  * An OpenStack BMC that can be used to control OpenStack instances via IPMI commands.
+  * A tool to collect details from the "baremetal" VMs so they can be added as nodes in the OpenStack Ironic baremetal deployment project.
+
+  A basic OVB environment is just a BMC VM configured to control a number of
+  "baremetal" VMs. This allows them to be treated largely the same way a real
+  baremetal system with a BMC would. A number of additional features can also
+  be enabled to add more to the environment.
+
+adopt-info: ovb
+confinement: strict
+
+apps:
+  openstackbmc:
+    command: bin/openstackbmc
+    plugs:
+      - network
+      - network-bind
+
+  ovb-build-nodes-json:
+    command: bin/ovb-build-nodes-json
+  ovb-deploy:
+    command: bin/ovb-deploy
+
+parts:
+  ovb:
+    plugin: python
+    source: https://opendev.org/openstack/openstack-virtual-baremetal.git
+    override-pull: |
+      snapcraftctl pull
+      version="$(git describe --tags --always --dirty)"
+      [ -n "$(echo $version | grep '-')" ] && grade=devel || grade=stable
+      snapcraftctl set-version "$version"
+      snapcraftctl set-grade "$grade"
